@@ -23,6 +23,26 @@ public class TicketService {
     private InternauteRepository internauteRepository;
 
     @Transactional
+    public Ticket ajouterTicketEtAffecterAEvenementEtInternaute(Ticket ticket, Long idEvenement, Long idInternaute) {
+        Evenement evenement = evenementRepository.findById(idEvenement)
+                .orElseThrow(() -> new EntityNotFoundException("Evenement not found"));
+        Internaute internaute = internauteRepository.findById(idInternaute)
+                .orElseThrow(() -> new EntityNotFoundException("Internaute not found"));
+
+        if (evenement.getNbPlacesRestantes() < 1) {
+            throw new UnsupportedOperationException("Aucune place disponible");
+        }
+
+        ticket.setEvenement(evenement);
+        ticket.setInternaute(internaute);
+
+        evenement.setNbPlacesRestantes(evenement.getNbPlacesRestantes() - 1);
+        evenementRepository.save(evenement);
+
+        return ticketRepository.save(ticket);
+    }
+
+    @Transactional
     public List<Ticket> ajouterTicketsEtAffecterAEvenementEtInternaute(List<Ticket> tickets, Long idEvenement, Long idInternaute) {
         Evenement evenement = evenementRepository.findById(idEvenement)
                 .orElseThrow(() -> new EntityNotFoundException("Evenement not found"));
@@ -30,7 +50,7 @@ public class TicketService {
                 .orElseThrow(() -> new EntityNotFoundException("Internaute not found"));
 
         if (tickets.size() > evenement.getNbPlacesRestantes()) {
-            throw new UnsupportedOperationException("nombre de places demandées indisponibe");
+            throw new UnsupportedOperationException("Nombre de places demandées indisponible");
         }
 
         tickets.forEach(ticket -> {
@@ -44,4 +64,3 @@ public class TicketService {
         return ticketRepository.saveAll(tickets);
     }
 }
-
